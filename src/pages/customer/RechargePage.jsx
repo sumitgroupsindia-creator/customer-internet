@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../lib/api';
 import { usePublicSettings } from '../../lib/usePublicSettings';
+import BillingCyclePicker, { getCyclesForPlan, cycleTotal } from '../../components/BillingCyclePicker';
 
 function loadRazorpay() {
   return new Promise((resolve) => {
@@ -33,6 +34,7 @@ export default function RechargePage() {
   const settings = usePublicSettings();
   const [submitting, setSubmitting] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState('');
+  const [billingCycle, setBillingCycle] = useState('');
 
   const meQ = useQuery({
     queryKey: ['me'],
@@ -64,12 +66,16 @@ export default function RechargePage() {
     [plans, selectedPlanId],
   );
 
+  const planCycles = useMemo(() => getCyclesForPlan(selectedPlan), [selectedPlan]);
+  const selectedCycle = useMemo(
+    () => planCycles.find((c) => c.key === billingCycle) || planCycles[0],
+    [planCycles, billingCycle],
+  );
+
   const totalPaise = useMemo(() => {
-    if (!selectedPlan) return 0;
-    const base = Number(selectedPlan.price ?? selectedPlan.monthlyPrice ?? 0);
-    const gst = Number(selectedPlan.gstPercent ?? 0);
-    return Math.round(base * (1 + gst / 100) * 100);
-  }, [selectedPlan]);
+    if (!selectedCycle) return 0;
+    return Math.round(cycleTotal(selectedCycle) * 100);
+  }, [selectedCycle]);
 
   const verifyMut = useMutation({
     mutationFn: async (payload) =>
@@ -93,6 +99,7 @@ export default function RechargePage() {
       // 1) Create order on backend
       const { data: order } = await api.post('/internet/me/recharge/order', {
         planId: selectedPlanId,
+        billingCycle: selectedCycle?.key,
       });
 
       // 2) Open Razorpay checkout
@@ -116,6 +123,7 @@ export default function RechargePage() {
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
               planId: selectedPlanId,
+              billingCycle: selectedCycle?.key,
             });
             toast.success('Payment successful! Recharge activated.');
             qc.invalidateQueries({ queryKey: ['me'] });
@@ -201,9 +209,11 @@ export default function RechargePage() {
           ) : (
             <div className="space-y-2">
               {plans.map((p) => {
-                const base = Number(p.price ?? p.monthlyPrice ?? 0);
-                const gst = Number(p.gstPercent ?? 0);
-                const total = +(base * (1 + gst / 100)).toFixed(2);
+                const cycles = getCyclesForPlan(p);
+                const cheapest = cycles.reduce(
+                  (lo, c) => (cycleTotal(c) < cycleTotal(lo) ? c : lo),
+                  cycles[0],
+                );
                 const active = String(p._id) === String(selectedPlanId);
                 return (
                   <label
@@ -225,15 +235,15 @@ export default function RechargePage() {
                       <div>
                         <div className="font-semibold text-gray-900">{p.name}</div>
                         <div className="text-xs text-gray-600">
-                          {p.speedMbps ? `${p.speedMbps} Mbps` : ''}
-                          {p.durationDays ? ` • ${p.durationDays} days` : ''}
-                          {gst ? ` • incl. ${gst}% GST` : ''}
+                          {p.speedMbps ? `${p.speedMbps} Mbps` : p.speed || ''}
+                          {cycles.length > 1 ? ` • ${cycles.length} billing options` : ''}
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
+                      <div className="text-[11px] text-gray-500">{cycles.length > 1 ? 'starts from' : ''}</div>
                       <div className="text-lg font-bold text-gray-900">
-                        ₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        ₹{cycleTotal(cheapest).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </div>
                     </div>
                   </label>
@@ -241,6 +251,17 @@ export default function RechargePage() {
               })}
             </div>
           )}
+
+          {selectedPlan ? (
+            <div className="mt-4">
+              <label className="mb-2 block text-sm font-medium text-gray-700">Billing cycle</label>
+              <BillingCyclePicker
+                plan={selectedPlan}
+                value={billingCycle || selectedCycle?.key || ''}
+                onChange={setBillingCycle}
+              />
+            </div>
+          ) : null}
         </div>
 
         <div className="flex items-center justify-between gap-4 border-t border-gray-200 p-4">
