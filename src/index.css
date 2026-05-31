@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans bg-gray-50 text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-600 text-white px-5 py-2.5 rounded-lg hover:bg-brand-700 active:bg-brand-800 transition-colors font-semibold disabled:opacity-60 disabled:cursor-not-allowed shadow-sm;
+  }
+  .btn-secondary {
+    @apply bg-white text-brand-700 border border-brand-200 px-5 py-2.5 rounded-lg hover:bg-brand-50 transition-colors font-semibold;
+  }
+  .btn-ghost {
+    @apply text-brand-700 hover:text-brand-800 font-medium;
+  }
+  .input-field {
+    @apply w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+}
+
+/* Print stylesheet — used for receipts */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+}
