@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { formatINR } from '../../lib/format';
+import { getCyclesForPlan, cycleTotal } from '../../components/BillingCyclePicker';
 
 export default function PlansPage() {
   const [filter, setFilter] = useState('all');
@@ -12,16 +13,20 @@ export default function PlansPage() {
     queryFn: () => api.get('/internet/plans').then((r) => r.data),
   });
 
-  const filtered = useMemo(() => {
+  const planOptions = useMemo(() => {
     if (!plans) return [];
-    if (filter === 'all') return plans;
-    return plans.filter((p) => Number(p.durationDays) === Number(filter));
-  }, [plans, filter]);
+    return plans.flatMap((plan) => getCyclesForPlan(plan).map((cycle) => ({ plan, cycle })));
+  }, [plans]);
+
+  const filtered = useMemo(() => {
+    if (filter === 'all') return planOptions;
+    return planOptions.filter(({ cycle }) => Number(cycle.durationDays) === Number(filter));
+  }, [planOptions, filter]);
 
   const durations = useMemo(() => {
-    const set = new Set(plans?.map((p) => p.durationDays).filter(Boolean) || []);
+    const set = new Set(planOptions.map(({ cycle }) => cycle.durationDays).filter(Boolean));
     return [...set].sort((a, b) => a - b);
-  }, [plans]);
+  }, [planOptions]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -54,18 +59,17 @@ export default function PlansPage() {
 
       <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading && <div className="text-gray-500">Loading…</div>}
-        {filtered.map((p) => {
-          const price = p.price ?? p.monthlyPrice ?? 0;
-          const gst = p.gstPercent ? (price * p.gstPercent) / 100 : 0;
+        {filtered.map(({ plan: p, cycle }) => {
+          const price = cycleTotal(cycle);
           return (
-            <div key={p._id} className="card hover:border-brand-300 transition-colors flex flex-col">
+            <div key={`${p._id}-${cycle.key}`} className="card hover:border-brand-300 transition-colors flex flex-col">
               <div className="flex items-baseline justify-between">
                 <h3 className="font-bold text-gray-900">{p.name}</h3>
                 {p.speedMbps && <span className="badge bg-brand-50 text-brand-700">⚡ {p.speedMbps} Mbps</span>}
               </div>
-              <p className="text-3xl font-extrabold text-gray-900 mt-3">₹{formatINR(price + gst)}</p>
+              <p className="text-3xl font-extrabold text-gray-900 mt-3">₹{formatINR(price)}</p>
               <p className="text-sm text-gray-500">
-                / {p.durationDays || 30} days {p.gstPercent ? `(incl. ${p.gstPercent}% GST)` : ''}
+                / {cycle.durationDays || 30} days · {cycle.label} {cycle.gstPercent ? `(incl. ${cycle.gstPercent}% GST)` : ''}
               </p>
               {p.description && <p className="text-sm text-gray-500 mt-3">{p.description}</p>}
               {p.features?.length > 0 && (

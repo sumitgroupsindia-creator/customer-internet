@@ -5,8 +5,8 @@
 
 import { useEffect, useMemo } from 'react';
 
-const CYCLE_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly' };
-const CYCLE_DURATIONS = { monthly: 30, quarterly: 90, yearly: 365 };
+const CYCLE_LABELS = { monthly: 'Monthly', quarterly: 'Quarterly', halfyearly: 'Half Yearly', yearly: 'Yearly' };
+const CYCLE_DURATIONS = { monthly: 30, quarterly: 90, halfyearly: 180, yearly: 365 };
 
 export function getCyclesForPlan(plan) {
   if (!plan) return [];
