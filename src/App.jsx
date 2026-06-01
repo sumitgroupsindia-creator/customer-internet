@@ -61,7 +61,18 @@ export default function App() {
             </main>
             <Footer />
           </div>
-          <Toaster position="top-right" />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: 'rgb(var(--surface))',
+                color: 'rgb(var(--fg))',
+                border: '1px solid rgb(var(--line))',
+                borderRadius: '0.875rem',
+                boxShadow: '0 12px 32px -12px rgb(0 0 0 / 0.28)',
+              },
+            }}
+          />
         </BrowserRouter>
       </CustomerAuthProvider>
     </QueryClientProvider>

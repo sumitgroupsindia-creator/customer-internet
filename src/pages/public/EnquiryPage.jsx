@@ -22,35 +22,35 @@ export default function EnquiryPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-extrabold text-gray-900">Request a Connection</h1>
-      <p className="text-gray-500 mt-2">Fill in your details — we'll verify coverage and call you back within a day.</p>
+      <h1 className="text-3xl font-extrabold text-fg">Request a Connection</h1>
+      <p className="text-subtle mt-2">Fill in your details — we'll verify coverage and call you back within a day.</p>
 
       <form onSubmit={handleSubmit((d) => submit.mutate(d))} className="card mt-8 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Full name *</label>
+          <label className="block text-sm font-medium text-muted mb-1">Full name *</label>
           <input className="input-field" {...register('name', { required: true })} />
           {errors.name && <p className="text-xs text-red-600 mt-1">Required</p>}
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mobile *</label>
+            <label className="block text-sm font-medium text-muted mb-1">Mobile *</label>
             <input className="input-field" inputMode="numeric" maxLength={10}
               {...register('mobile', { required: true, pattern: /^[6-9]\d{9}$/ })} />
             {errors.mobile && <p className="text-xs text-red-600 mt-1">Enter a valid 10-digit mobile</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Alternate mobile</label>
+            <label className="block text-sm font-medium text-muted mb-1">Alternate mobile</label>
             <input className="input-field" inputMode="numeric" maxLength={10} {...register('alternateMobile')} />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Address / Locality *</label>
+          <label className="block text-sm font-medium text-muted mb-1">Address / Locality *</label>
           <textarea rows={3} className="input-field" {...register('address', { required: true })} />
           {errors.address && <p className="text-xs text-red-600 mt-1">Required</p>}
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Preferred plan</label>
+            <label className="block text-sm font-medium text-muted mb-1">Preferred plan</label>
             <select className="input-field" {...register('planId')}>
               <option value="">No preference</option>
               {plans?.map((p) => (
@@ -59,7 +59,7 @@ export default function EnquiryPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Best time to call</label>
+            <label className="block text-sm font-medium text-muted mb-1">Best time to call</label>
             <select className="input-field" {...register('preferredCallTime')}>
               <option value="any">Any time</option>
               <option value="morning">Morning</option>
@@ -69,7 +69,7 @@ export default function EnquiryPage() {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <label className="block text-sm font-medium text-muted mb-1">Notes</label>
           <textarea rows={2} className="input-field" {...register('notes')} />
         </div>
         <button type="submit" disabled={isSubmitting || submit.isPending} className="btn-primary w-full">

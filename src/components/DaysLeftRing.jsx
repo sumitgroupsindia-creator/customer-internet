@@ -19,9 +19,9 @@ export default function DaysLeftRing({ daysLeft, totalDays = 30, size = 160 }) {
 
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
+      <svg width={size} height={size} className="-rotate-90 text-line">
         <circle cx={size / 2} cy={size / 2} r={radius}
-          stroke="#e5e7eb" strokeWidth={stroke} fill="none" />
+          stroke="currentColor" strokeWidth={stroke} fill="none" />
         <circle cx={size / 2} cy={size / 2} r={radius}
           stroke={color} strokeWidth={stroke} fill="none" strokeLinecap="round"
           strokeDasharray={circumference}
@@ -32,7 +32,7 @@ export default function DaysLeftRing({ daysLeft, totalDays = 30, size = 160 }) {
         <span className="text-3xl font-extrabold" style={{ color }}>
           {daysLeft <= 0 ? Math.abs(daysLeft) : daysLeft}
         </span>
-        <span className="text-xs text-gray-500 mt-0.5">
+        <span className="text-xs text-muted mt-0.5">
           {daysLeft < 0 ? 'days ago' : daysLeft === 0 ? 'expires today' : 'days left'}
         </span>
       </div>

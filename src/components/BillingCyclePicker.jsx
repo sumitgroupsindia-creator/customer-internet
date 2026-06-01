@@ -56,8 +56,8 @@ export default function BillingCyclePicker({ plan, value, onChange }) {
   if (cycles.length === 1) {
     const c = cycles[0];
     return (
-      <div className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
-        Billing: <span className="font-semibold text-gray-900">{c.label}</span> · {c.durationDays} days · ₹{cycleTotal(c).toLocaleString('en-IN')}
+      <div className="rounded-lg bg-surface-2 px-3 py-2 text-xs text-muted">
+        Billing: <span className="font-semibold text-fg">{c.label}</span> · {c.durationDays} days · ₹{cycleTotal(c).toLocaleString('en-IN')}
       </div>
     );
   }
@@ -72,17 +72,19 @@ export default function BillingCyclePicker({ plan, value, onChange }) {
             key={c.key}
             type="button"
             onClick={() => onChange?.(c.key)}
-            className={`rounded-lg border p-3 text-left transition ${
-              active ? 'border-teal-600 bg-teal-50 ring-1 ring-teal-600' : 'border-gray-200 hover:border-gray-300'
+            className={`rounded-xl border p-3 text-left transition-all ${
+              active
+                ? 'border-brand-500 bg-brand-500/[0.06] ring-1 ring-brand-500 shadow-sm'
+                : 'border-line hover:border-brand-300 hover:bg-surface-2'
             }`}
           >
-            <div className="text-sm font-semibold text-gray-900">{c.label}</div>
-            <div className="text-[11px] text-gray-500">{c.durationDays} days{c.gstPercent ? ` · incl. ${c.gstPercent}% GST` : ''}</div>
-            <div className="mt-1 text-lg font-bold text-gray-900">
+            <div className="text-sm font-semibold text-fg">{c.label}</div>
+            <div className="text-[11px] text-subtle">{c.durationDays} days{c.gstPercent ? ` · incl. ${c.gstPercent}% GST` : ''}</div>
+            <div className="mt-1 text-lg font-bold text-fg">
               ₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </div>
             {c.discountPrice != null && Number(c.price) > 0 ? (
-              <div className="text-[11px] text-gray-400 line-through">
+              <div className="text-[11px] text-subtle line-through">
                 ₹{(Number(c.price) * (1 + Number(c.gstPercent || 0) / 100)).toFixed(2)}
               </div>
             ) : null}

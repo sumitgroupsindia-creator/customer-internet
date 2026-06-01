@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import api from '../../lib/api';
 import { usePublicSettings } from '../../lib/usePublicSettings';
 import BillingCyclePicker, { getCyclesForPlan, cycleTotal } from '../../components/BillingCyclePicker';
+import { Icon, Badge, Skeleton, EmptyState, PageHeader } from '../../components/ui';
 
 function loadRazorpay() {
   return new Promise((resolve) => {
@@ -158,131 +159,184 @@ export default function RechargePage() {
   }
 
   if (meQ.isLoading || plansQ.isLoading) {
-    return <div className="p-6 text-gray-600">Loading…</div>;
+    return (
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8 sm:py-10">
+        <Skeleton className="h-9 w-40" />
+        <Skeleton className="h-4 w-72 mt-3" />
+        <Skeleton className="h-24 w-full rounded-2xl mt-6" />
+        <div className="grid lg:grid-cols-3 gap-6 mt-6">
+          <div className="lg:col-span-2 space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
+          </div>
+          <Skeleton className="h-64 rounded-2xl" />
+        </div>
+      </div>
+    );
   }
 
   if (!settings.enableSelfRecharge) {
     return (
-      <div className="mx-auto max-w-2xl p-6">
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
-          <h2 className="text-lg font-semibold">Self-recharge unavailable</h2>
-          <p className="mt-1 text-sm">
-            Online recharge is currently disabled by the admin. Please contact support
-            {settings.supportPhone ? (
-              <>
-                {' '}
-                at <a className="underline" href={`tel:${settings.supportPhone}`}>{settings.supportPhone}</a>
-              </>
-            ) : null}
-            .
-          </p>
+      <div className="mx-auto max-w-2xl px-4 sm:px-6 py-10">
+        <PageHeader eyebrow="Recharge" title="Recharge" />
+        <div className="card mt-6">
+          <EmptyState
+            icon="lock"
+            title="Self-recharge unavailable"
+            description={
+              settings.supportPhone
+                ? `Online recharge is currently disabled by the admin. Please contact support at ${settings.supportPhone}.`
+                : 'Online recharge is currently disabled by the admin. Please contact support.'
+            }
+            action={
+              settings.supportPhone ? (
+                <a href={`tel:${settings.supportPhone}`} className="btn-primary text-sm">
+                  <Icon name="phone" className="w-4 h-4" /> Call support
+                </a>
+              ) : null
+            }
+          />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl p-4 sm:p-6">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Recharge</h1>
-        <p className="text-sm text-gray-600">
-          Pay securely via Razorpay. Your plan activates instantly on successful payment.
-        </p>
-      </div>
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8 sm:py-10 animate-fade-up">
+      <PageHeader
+        eyebrow="Recharge"
+        title="Recharge your plan"
+        subtitle="Pay securely via Razorpay. Your plan activates instantly on success."
+      />
 
-      <div className="rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
-        <div className="border-b border-gray-200 p-4">
-          <div className="text-xs uppercase tracking-wide text-gray-500">Account</div>
-          <div className="mt-1 flex flex-wrap items-baseline gap-x-4">
-            <div className="text-lg font-semibold text-gray-900">{me?.name}</div>
-            <div className="text-sm text-gray-600">{me?.customerId}</div>
-            <div className="text-sm text-gray-600">{me?.mobile}</div>
+      {/* Account banner */}
+      <div className="card mt-6 !py-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="flex items-center gap-3">
+          <span className="w-10 h-10 rounded-xl bg-brand-500/15 text-brand-700 dark:text-brand-300 flex items-center justify-center font-bold">
+            {(me?.name || 'U').charAt(0).toUpperCase()}
+          </span>
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-subtle font-semibold">Account</div>
+            <div className="font-semibold text-fg leading-tight">{me?.name}</div>
           </div>
         </div>
+        <div className="flex items-center gap-6 text-sm text-muted">
+          <span className="font-mono">{me?.customerId}</span>
+          <span className="inline-flex items-center gap-1.5"><Icon name="phone" className="w-4 h-4 text-subtle" /> {me?.mobile}</span>
+        </div>
+      </div>
 
-        <div className="p-4">
-          <label className="mb-2 block text-sm font-medium text-gray-700">Select Plan</label>
-          {plans.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-600">
-              No paid plans are currently available.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {plans.map((p) => {
-                const cycles = getCyclesForPlan(p);
-                const cheapest = cycles.reduce(
-                  (lo, c) => (cycleTotal(c) < cycleTotal(lo) ? c : lo),
-                  cycles[0],
-                );
-                const active = String(p._id) === String(selectedPlanId);
-                return (
-                  <label
-                    key={p._id}
-                    className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 transition ${
-                      active
-                        ? 'border-teal-600 bg-teal-50 ring-1 ring-teal-600'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="plan"
-                        className="h-4 w-4 accent-teal-600"
-                        checked={active}
-                        onChange={() => setSelectedPlanId(String(p._id))}
-                      />
-                      <div>
-                        <div className="font-semibold text-gray-900">{p.name}</div>
-                        <div className="text-xs text-gray-600">
-                          {p.speedMbps ? `${p.speedMbps} Mbps` : p.speed || ''}
-                          {cycles.length > 1 ? ` • ${cycles.length} billing options` : ''}
+      <div className="grid lg:grid-cols-3 gap-6 mt-6">
+        {/* Plan selection */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="card">
+            <h2 className="font-display font-bold text-fg flex items-center gap-2">
+              <Icon name="package" className="w-5 h-5 text-brand-600 dark:text-brand-400" /> Select a plan
+            </h2>
+            {plans.length === 0 ? (
+              <EmptyState className="!py-10" icon="package" title="No plans available" description="No paid plans are currently available. Please check back later." />
+            ) : (
+              <div className="space-y-2.5 mt-4">
+                {plans.map((p) => {
+                  const cycles = getCyclesForPlan(p);
+                  const cheapest = cycles.reduce(
+                    (lo, c) => (cycleTotal(c) < cycleTotal(lo) ? c : lo),
+                    cycles[0],
+                  );
+                  const active = String(p._id) === String(selectedPlanId);
+                  return (
+                    <label
+                      key={p._id}
+                      className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border p-4 transition-all ${
+                        active
+                          ? 'border-brand-500 bg-brand-500/[0.06] ring-1 ring-brand-500 shadow-sm'
+                          : 'border-line hover:border-brand-300 hover:bg-surface-2'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className={`grid place-items-center w-5 h-5 rounded-full border-2 shrink-0 transition-colors ${active ? 'border-brand-600 bg-brand-600' : 'border-line'}`}>
+                          {active && <Icon name="check" className="w-3 h-3 text-white" strokeWidth={3} />}
+                        </span>
+                        <input
+                          type="radio"
+                          name="plan"
+                          className="sr-only"
+                          checked={active}
+                          onChange={() => setSelectedPlanId(String(p._id))}
+                        />
+                        <div className="min-w-0">
+                          <div className="font-semibold text-fg truncate">{p.name}</div>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                            {p.speedMbps ? <Badge tone="brand"><Icon name="bolt" className="w-3 h-3" /> {p.speedMbps} Mbps</Badge> : null}
+                            {cycles.length > 1 ? <Badge tone="neutral">{cycles.length} billing options</Badge> : null}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[11px] text-gray-500">{cycles.length > 1 ? 'starts from' : ''}</div>
-                      <div className="text-lg font-bold text-gray-900">
-                        ₹{cycleTotal(cheapest).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      <div className="text-right shrink-0">
+                        {cycles.length > 1 && <div className="text-[11px] text-subtle">starts from</div>}
+                        <div className="text-lg font-bold text-fg">
+                          ₹{cycleTotal(cheapest).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </div>
                       </div>
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
-          )}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
 
-          {selectedPlan ? (
-            <div className="mt-4">
-              <label className="mb-2 block text-sm font-medium text-gray-700">Billing cycle</label>
-              <BillingCyclePicker
-                plan={selectedPlan}
-                value={billingCycle || selectedCycle?.key || ''}
-                onChange={setBillingCycle}
-              />
-            </div>
-          ) : null}
+            {selectedPlan ? (
+              <div className="mt-6">
+                <div className="label">Billing cycle</div>
+                <BillingCyclePicker
+                  plan={selectedPlan}
+                  value={billingCycle || selectedCycle?.key || ''}
+                  onChange={setBillingCycle}
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 border-t border-gray-200 p-4">
-          <div>
-            <div className="text-xs uppercase tracking-wide text-gray-500">Total Payable</div>
-            <div className="text-2xl font-bold text-gray-900">{inr(totalPaise)}</div>
+        {/* Order summary (sticky) */}
+        <div className="lg:sticky lg:top-24 h-fit">
+          <div className="card">
+            <h3 className="font-display font-bold text-fg">Order summary</h3>
+            <dl className="mt-4 space-y-2.5 text-sm">
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">Plan</dt>
+                <dd className="font-semibold text-fg text-right">{selectedPlan?.name || '—'}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">Billing</dt>
+                <dd className="font-semibold text-fg text-right">{selectedCycle?.label || '—'}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">Duration</dt>
+                <dd className="font-semibold text-fg text-right">{selectedCycle?.durationDays || '—'} days</dd>
+              </div>
+            </dl>
+            <div className="flex items-end justify-between gap-3 mt-4 pt-4 border-t border-line">
+              <span className="text-xs uppercase tracking-wide text-subtle font-semibold">Total payable</span>
+              <span className="text-2xl font-display font-extrabold text-fg">{inr(totalPaise)}</span>
+            </div>
+            <button
+              type="button"
+              onClick={handlePay}
+              disabled={!selectedPlan || submitting}
+              className="btn-primary w-full mt-5 py-3"
+            >
+              {submitting ? (
+                <><span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" /> Processing…</>
+              ) : (
+                <><Icon name="lock" className="w-4 h-4" /> Pay {inr(totalPaise)}</>
+              )}
+            </button>
+            <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-subtle">
+              <Icon name="shieldCheck" className="w-4 h-4 text-emerald-500" />
+              Secured by Razorpay · UPI, Cards, NetBanking
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={handlePay}
-            disabled={!selectedPlan || submitting}
-            className="rounded-lg bg-teal-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:bg-gray-300"
-          >
-            {submitting ? 'Processing…' : 'Pay Now'}
-          </button>
         </div>
       </div>
-
-      <p className="mt-3 text-center text-xs text-gray-500">
-        Powered by Razorpay • UPI, Cards, NetBanking, Wallets
-      </p>
     </div>
   );
 }

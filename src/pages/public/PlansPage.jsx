@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { formatINR } from '../../lib/format';
 import { getCyclesForPlan, cycleTotal } from '../../components/BillingCyclePicker';
+import { Icon, EmptyState } from '../../components/ui';
 
 export default function PlansPage() {
   const [filter, setFilter] = useState('all');
@@ -29,58 +30,61 @@ export default function PlansPage() {
   }, [planOptions]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-extrabold text-gray-900">All Plans</h1>
-      <p className="text-gray-500 mt-2">Choose a duration that suits you. All plans include unlimited data and free local support.</p>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-up">
+      <p className="text-sm font-medium text-brand-600 dark:text-brand-400">Pricing</p>
+      <h1 className="text-3xl sm:text-4xl font-display font-extrabold text-fg mt-1">All Plans</h1>
+      <p className="text-muted mt-2 max-w-2xl">Choose a duration that suits you. All plans include unlimited data and free local support.</p>
 
       {durations.length > 0 && (
         <div className="mt-6 flex flex-wrap gap-2">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border ${
-              filter === 'all' ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-gray-700 border-gray-200 hover:border-brand-300'
-            }`}
-          >
-            All
-          </button>
+          <FilterChip active={filter === 'all'} onClick={() => setFilter('all')}>All</FilterChip>
           {durations.map((d) => (
-            <button
-              key={d}
-              onClick={() => setFilter(d)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium border ${
-                String(filter) === String(d) ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-gray-700 border-gray-200 hover:border-brand-300'
-              }`}
-            >
+            <FilterChip key={d} active={String(filter) === String(d)} onClick={() => setFilter(d)}>
               {d} days
-            </button>
+            </FilterChip>
           ))}
         </div>
       )}
 
       <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isLoading && <div className="text-gray-500">Loading…</div>}
+        {isLoading &&
+          [...Array(6)].map((_, i) => (
+            <div key={i} className="card space-y-4">
+              <div className="skeleton h-5 w-32" />
+              <div className="skeleton h-9 w-28" />
+              <div className="skeleton h-4 w-40" />
+              <div className="skeleton h-9 w-full mt-4" />
+            </div>
+          ))}
         {filtered.map(({ plan: p, cycle }) => {
           const price = cycleTotal(cycle);
           return (
-            <div key={`${p._id}-${cycle.key}`} className="card hover:border-brand-300 transition-colors flex flex-col">
+            <div key={`${p._id}-${cycle.key}`} className="card-interactive flex flex-col">
               <div className="flex items-baseline justify-between">
-                <h3 className="font-bold text-gray-900">{p.name}</h3>
-                {p.speedMbps && <span className="badge bg-brand-50 text-brand-700">⚡ {p.speedMbps} Mbps</span>}
+                <h3 className="font-display font-bold text-fg">{p.name}</h3>
+                {p.speedMbps && (
+                  <span className="badge-brand">
+                    <Icon name="bolt" className="w-3.5 h-3.5" /> {p.speedMbps} Mbps
+                  </span>
+                )}
               </div>
-              <p className="text-3xl font-extrabold text-gray-900 mt-3">₹{formatINR(price)}</p>
-              <p className="text-sm text-gray-500">
+              <p className="text-3xl font-display font-extrabold text-fg mt-3">₹{formatINR(price)}</p>
+              <p className="text-sm text-muted">
                 / {cycle.durationDays || 30} days · {cycle.label} {cycle.gstPercent ? `(incl. ${cycle.gstPercent}% GST)` : ''}
               </p>
-              {p.description && <p className="text-sm text-gray-500 mt-3">{p.description}</p>}
+              {p.description && <p className="text-sm text-muted mt-3">{p.description}</p>}
               {p.features?.length > 0 && (
-                <ul className="mt-4 space-y-1.5 text-sm text-gray-600">
+                <ul className="mt-4 space-y-2 text-sm text-muted">
                   {p.features.map((f, i) => (
-                    <li key={i} className="flex gap-2"><span className="text-brand-600">✓</span>{f}</li>
+                    <li key={i} className="flex gap-2">
+                      <Icon name="check" className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0 mt-0.5" />
+                      {f}
+                    </li>
                   ))}
                 </ul>
               )}
               <div className="mt-auto pt-6">
-                <Link to="/enquire" className="btn-secondary w-full text-center text-sm">Get this plan</Link>
+                <Link to="/enquire" className="btn-secondary w-full text-sm">Get this plan</Link>
               </div>
             </div>
           );
@@ -88,8 +92,23 @@ export default function PlansPage() {
       </div>
 
       {!isLoading && filtered.length === 0 && (
-        <div className="text-center py-16 text-gray-500">No plans available for this duration.</div>
+        <EmptyState icon="inbox" title="No plans available" description="There are no plans for this duration. Try another filter." />
       )}
     </div>
+  );
+}
+
+function FilterChip({ active, onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+        active
+          ? 'bg-brand-600 text-white border-brand-600'
+          : 'bg-surface text-muted border-line hover:border-brand-300 hover:text-fg'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
